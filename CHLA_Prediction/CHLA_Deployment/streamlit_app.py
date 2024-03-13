@@ -9,7 +9,7 @@ import pandas as pd
 import datetime
 import pickle
 
-model = pickle.load(open('./random_forest.pkl', 'rb'))
+model = pickle.load(open('./CHLA_Prediction/CHLA_Deployment/random_forest.pkl', 'rb'))
 
 today = datetime.datetime.today()
 date_string = datetime.datetime(2000, 1, 1)
@@ -18,7 +18,7 @@ date_string = datetime.datetime(2000, 1, 1)
 
 
 def main():
-    st.set_page_config(page_title="CHIA Prediction")
+    st.set_page_config(page_title="CHLA Prediction")
     st.title("Patient Showup Prediction: ")
 
     appt_date = st.date_input(label = "Appointment Date", value = today, min_value= date_string)
