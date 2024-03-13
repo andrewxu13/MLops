@@ -9,7 +9,7 @@ import pandas as pd
 import datetime
 import pickle
 
-model = pickle.load(open('./CHLA_Prediction/random_forest.pkl', 'rb'))
+model = pickle.load(open('./random_forest.pkl', 'rb'))
 
 today = datetime.datetime.today()
 date_string = datetime.datetime(2000, 1, 1)
