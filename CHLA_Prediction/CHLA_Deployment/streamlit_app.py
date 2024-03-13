@@ -7,7 +7,6 @@ logging.basicConfig(filename='./app.log', level=logging.INFO, format='%(name)s -
 import streamlit as st
 import pandas as pd
 import datetime
-import sklearn
 import pickle
 
 model = pickle.load(open('./CHLA_Prediction/random_forest.pkl', 'rb'))
