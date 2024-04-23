@@ -14,6 +14,7 @@ encoder_dict = pickle.load(open('./CHLA_Prediction/CHLA_Deployment/encoder_V2.pk
 data_path = './CHLA_Prediction/CHLA_Deployment/CHLA_clean_data_2024_Appointments.csv'
 dataset = pd.read_csv(data_path)
 dataset.columns = dataset.columns.str.lower()
+dataset['appt_date'] = pd.to_datetime(dataset['appt_date'], errors='coerce')
 
 # Convert date columns to datetime
 dataset['appt_date'] = pd.to_datetime(dataset['appt_date'])
