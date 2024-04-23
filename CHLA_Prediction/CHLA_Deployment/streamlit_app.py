@@ -12,21 +12,6 @@ DATASET = pd.read_csv('./CHLA_Prediction/CHLA_Deployment/CHLA_clean_data_2024_Ap
 DATASET.columns = DATASET.columns.str.upper()
 DATASET['APPT_DATE'] = pd.to_datetime(DATASET['APPT_DATE'], errors='coerce')
 
-def process_features(DATA, ENCODER_DICT):
-    # Columns that should be dropped if they contain unseen categories
-    DROPPABLE_COLUMNS = []
-    for COLUMN in ENCODER_DICT:
-        if COLUMN in DATA.columns:
-            LE = preprocessing.LabelEncoder()
-            LE.classes_ = ENCODER_DICT[COLUMN]  # Load previously fitted classes
-
-            # Check if all current data points are in the known classes
-            if not set(DATA[COLUMN].unique()).issubset(set(LE.classes_)):
-                # If unseen values are found, mark the column for exclusion
-                DROPPABLE_COLUMNS.append(COLUMN)
-            else:
-                # Transform the data as all categories are seen
-                DATA[COLUMN] = LE.transform(DATA[COLUMN])
 
     # Drop columns with unseen categories
     DATA.drop(columns=DROPPABLE_COLUMNS, inplace=True, errors='ignore')
@@ -44,7 +29,9 @@ def main():
             (DATASET['APPT_DATE'].dt.date >= APPT_DATE_RANGE[0]) &
             (DATASET['APPT_DATE'].dt.date <= APPT_DATE_RANGE[1])
         ]
-
+        FILTERED_DATA = FILTERED_DATA['LEAD_TIME','TOTAL_NUMBER_OF_NOSHOW', 'TOTAL_NUMBER_OF_SUCCESS_APPOINTMENT',
+ 'TOTAL_NUMBER_OF_CANCELLATIONS', 'TOTAL_NUMBER_OF_RESCHEDULED', 'NUM_OF_MONTH']
+        
         if not FILTERED_DATA.empty:
             PROCESSED_DATA = process_features(FILTERED_DATA.copy(), ENCODER_DICT)
             PREDICTIONS = MODEL.predict(PROCESSED_DATA)
