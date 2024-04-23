@@ -41,8 +41,8 @@ def main():
     if st.button("Predict"):
         filtered_data = dataset[
             (dataset['clinic'] == clinic) &
-            (dataset['appt_date'] >= appt_date_range[0]) &
-            (dataset['appt_date'] <= appt_date_range[1])
+            (dataset['appt_date'].dt.date >= appt_date_range[0]) &
+            (dataset['appt_date'].dt.date <= appt_date_range[1])
         ]
 
         if not filtered_data.empty:
