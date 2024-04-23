@@ -16,21 +16,25 @@ dataset = pd.read_csv(data_path)
 dataset.columns = dataset.columns.str.lower()
 dataset['appt_date'] = pd.to_datetime(dataset['appt_date'], errors='coerce')
 
-# Convert date columns to datetime
-dataset['appt_date'] = pd.to_datetime(dataset['appt_date'])
-
-# Function to encode features based on pre-fitted LabelEncoders, skipping date columns
-def encode_features(data, encoder_dict, skip_columns=None):
-    if skip_columns is None:
-        skip_columns = []
-    for column in encoder_dict:
-        if column in data.columns and column not in skip_columns:  # Only process columns that exist and are not in skip_columns
+# Function to process features, including dates
+def process_features(data, encoder_dict, date_columns=None):
+    if date_columns is None:
+        date_columns = []
+    for column in data.columns:
+        if column in date_columns:
+            # Extract date features if the column is a date
+            data[f'{column}_year'] = data[column].dt.year
+            data[f'{column}_month'] = data[column].dt.month
+            data[f'{column}_day'] = data[column].dt.day
+        elif column in encoder_dict:
+            # Encode categorical features
             le = preprocessing.LabelEncoder()
             le.classes_ = encoder_dict[column]
             data[column] = data[column].apply(lambda x: x if x in le.classes_ else 'Unknown')
             data[column] = le.transform(data[column])
+    # Optionally drop original date columns if they are not needed anymore
+    data.drop(columns=date_columns, errors='ignore', inplace=True)
     return data
-
 
 # Main function for Streamlit app
 def main():
@@ -48,12 +52,11 @@ def main():
         (dataset['appt_date'].dt.date >= appt_date_range[0]) &
         (dataset['appt_date'].dt.date <= appt_date_range[1])]
 
-
         if not filtered_data.empty:
-            # Encode the categorical features, excluding dates
-            encoded_data = encode_features(filtered_data.copy(), encoder_dict, skip_columns=['appt_date'])
+            # Process features for prediction, specifying which columns are dates
+            processed_data = process_features(filtered_data.copy(), encoder_dict, date_columns=['appt_date'])
             # Prepare features for prediction
-            predictions = model.predict(encoded_data.drop(['is_noshow'], axis=1, errors='ignore'))
+            predictions = model.predict(processed_data.drop(['is_noshow'], axis=1, errors='ignore'))
 
             # Append the predictions to the filtered DataFrame
             filtered_data['Prediction'] = predictions
