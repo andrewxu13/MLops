@@ -1,78 +1,72 @@
-import logging
-
-
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
-
-# Add file handler
-file_handler = logging.FileHandler('./app.log')
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(logging.Formatter('%(name)s - %(levelname)s - %(message)s'))
-logging.getLogger().addHandler(file_handler)
-
-
-
 import streamlit as st
 import pandas as pd
 import datetime
-import sklearn
 import pickle
+from sklearn import preprocessing
 
+# Load the model
 model = pickle.load(open('./CHLA_Prediction/CHLA_Deployment/random_forest.pkl', 'rb'))
 
-today = datetime.datetime.today()
-date_string = datetime.datetime(2000, 1, 1)
+# Load the encoder dictionary
+encoder_dict = pickle.load(open('./CHLA_Prediction/CHLA_Deployment/encoder_V2.pkl', 'rb'))
 
+# Load the dataset
+data_path = './CHLA_Prediction/CHLA_Deployment/CHLA_clean_data_2024_Appointments.csv'
+dataset = pd.read_csv(data_path)
+dataset.columns = dataset.columns.str.lower()
 
+# Convert date columns to datetime
+dataset['appt_date'] = pd.to_datetime(dataset['appt_date'])
+dataset['book_date'] = pd.to_datetime(dataset['book_date'])
 
-
-import pandas as pd
-import streamlit as st
-
-# Function to make prediction
-def make_prediction(data):
-    predict_df = pd.DataFrame([data])
-    predict_df['appt_date'] = pd.to_datetime(predict_df['appt_date'])
-    predict_df['book_date'] = pd.to_datetime(predict_df['book_date'])
-    predict_df['NUM_OF_MONTH'] = predict_df['appt_date'].dt.month
-    features_list = predict_df.drop(['appt_date', 'book_date'], axis=1).values
-    prediction = model.predict(features_list)
-    return prediction
+# Function to encode features based on pre-fitted LabelEncoders, skipping date columns
+def encode_features(data, encoder_dict, skip_columns=None):
+    if skip_columns is None:
+        skip_columns = []
+    for column in encoder_dict:
+        if column not in skip_columns:
+            le = preprocessing.LabelEncoder()
+            le.classes_ = encoder_dict[column]
+            data[column] = data[column].apply(lambda x: x if x in le.classes_ else 'Unknown')
+            data[column] = le.transform(data[column])
+    return data
 
 # Main function for Streamlit app
 def main():
     st.set_page_config(page_title="Appointment Showup Prediction")
     st.title("Appointment Showup Prediction")
 
-    appt_date = st.date_input(label="Appointment Date", value=today, min_value=date_string)
-    book_date = st.date_input(label="Booking Date", value=today, min_value=date_string)
-    lead_time = st.text_input("Lead time (in days)", 0)
-    total_no_show = st.text_input("Total number of previous no-shows", 0)
-    total_success = st.text_input("Total number of previous successful appointments", 0)
-    total_cancel = st.text_input("Total number of previous cancellations", 0)
-    total_reschedule = st.text_input("Total number of previous rescheduled appointments", 0)
+    # User inputs for dates and clinic
+    clinics = dataset['clinic'].dropna().unique()
+    clinic = st.selectbox("Select a Clinic", options=clinics)
+    appt_date = st.date_input("Appointment Date", value=dataset['appt_date'].min(), min_value=dataset['appt_date'].min(), max_value=dataset['appt_date'].max())
+    book_date = st.date_input("Booking Date", value=dataset['book_date'].min(), min_value=dataset['book_date'].min(), max_value=dataset['book_date'].max())
 
     if st.button("Predict"):
-        data = {
-            'appt_date': appt_date,
-            'book_date': book_date,
-            'lead_time': int(lead_time),
-            'total_no_show': int(total_no_show),
-            'total_success': int(total_success),
-            'total_cancel': int(total_cancel),
-            'total_reschedule': int(total_reschedule)
-        }
+        # Filter the dataset based on the input dates and selected clinic
+        filtered_data = dataset[
+            (dataset['clinic'] == clinic) &
+            (dataset['appt_date'] == appt_date) &
+            (dataset['book_date'] == book_date)
+        ]
 
-        prediction = make_prediction(data)
-        
-        if prediction == 1:
-            text = "Prediction: Patient is likely to miss the appointment."
+        if not filtered_data.empty:
+            # Encode the categorical features, excluding dates
+            encoded_data = encode_features(filtered_data.copy(), encoder_dict, skip_columns=['appt_date', 'book_date'])
+            # Prepare features for prediction
+            predictions = model.predict(encoded_data.drop(['is_noshow'], axis=1, errors='ignore'))
+
+            # Append the predictions to the filtered DataFrame
+            filtered_data['Prediction'] = predictions
+
+            if 'is_noshow' in filtered_data.columns:
+                accuracy = (filtered_data['Prediction'] == filtered_data['is_noshow']).mean() * 100
+                st.success(f"Prediction Accuracy: {accuracy:.2f}%")
+            
+            # Display the complete DataFrame with predictions
+            st.write(filtered_data)
         else:
-            text = "Prediction: Patient is likely to attend the appointment."
+            st.error("No data available for the selected clinic and dates.")
 
-        st.success(text)
-
-# Entry point for running the Streamlit app
 if __name__ == '__main__':
     main()
