@@ -43,11 +43,10 @@ def main():
 
     if st.button("Predict"):
         # Filter the dataset based on the selected clinic and appointment date range
-        filtered_data = dataset[
-            (dataset['clinic'] == clinic) &
-            (dataset['appt_date'] >= appt_date_range[0]) &
-            (dataset['appt_date'] <= appt_date_range[1])
-        ]
+        filtered_data = dataset[(dataset['clinic'] == clinic) &
+        (dataset['appt_date'].dt.date >= appt_date_range[0]) &
+        (dataset['appt_date'].dt.date <= appt_date_range[1])]
+
 
         if not filtered_data.empty:
             # Encode the categorical features, excluding dates
