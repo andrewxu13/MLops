@@ -17,7 +17,6 @@ dataset.columns = dataset.columns.str.lower()
 
 # Convert date columns to datetime
 dataset['appt_date'] = pd.to_datetime(dataset['appt_date'])
-dataset['book_date'] = pd.to_datetime(dataset['book_date'])
 
 # Function to encode features based on pre-fitted LabelEncoders, skipping date columns
 def encode_features(data, encoder_dict, skip_columns=None):
@@ -36,23 +35,22 @@ def main():
     st.set_page_config(page_title="Appointment Showup Prediction")
     st.title("Appointment Showup Prediction")
 
-    # User inputs for dates and clinic
+    # User inputs for clinic and range of appointment dates
     clinics = dataset['clinic'].dropna().unique()
     clinic = st.selectbox("Select a Clinic", options=clinics)
-    appt_date = st.date_input("Appointment Date", value=dataset['appt_date'].min(), min_value=dataset['appt_date'].min(), max_value=dataset['appt_date'].max())
-    book_date = st.date_input("Booking Date", value=dataset['book_date'].min(), min_value=dataset['book_date'].min(), max_value=dataset['book_date'].max())
+    appt_date_range = st.date_input("Select Appointment Date Range", value=[dataset['appt_date'].min(), dataset['appt_date'].max()], min_value=dataset['appt_date'].min(), max_value=dataset['appt_date'].max())
 
     if st.button("Predict"):
-        # Filter the dataset based on the input dates and selected clinic
+        # Filter the dataset based on the selected clinic and appointment date range
         filtered_data = dataset[
             (dataset['clinic'] == clinic) &
-            (dataset['appt_date'] == appt_date) &
-            (dataset['book_date'] == book_date)
+            (dataset['appt_date'] >= appt_date_range[0]) &
+            (dataset['appt_date'] <= appt_date_range[1])
         ]
 
         if not filtered_data.empty:
             # Encode the categorical features, excluding dates
-            encoded_data = encode_features(filtered_data.copy(), encoder_dict, skip_columns=['appt_date', 'book_date'])
+            encoded_data = encode_features(filtered_data.copy(), encoder_dict, skip_columns=['appt_date'])
             # Prepare features for prediction
             predictions = model.predict(encoded_data.drop(['is_noshow'], axis=1, errors='ignore'))
 
@@ -66,7 +64,7 @@ def main():
             # Display the complete DataFrame with predictions
             st.write(filtered_data)
         else:
-            st.error("No data available for the selected clinic and dates.")
+            st.error("No data available for the selected clinic and date range.")
 
 if __name__ == '__main__':
     main()
