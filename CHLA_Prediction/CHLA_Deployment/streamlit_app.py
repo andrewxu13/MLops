@@ -12,11 +12,6 @@ DATASET = pd.read_csv('./CHLA_Prediction/CHLA_Deployment/CHLA_clean_data_2024_Ap
 DATASET.columns = DATASET.columns.str.upper()
 DATASET['APPT_DATE'] = pd.to_datetime(DATASET['APPT_DATE'], errors='coerce')
 
-
-    # Drop columns with unseen categories
-    DATA.drop(columns=DROPPABLE_COLUMNS, inplace=True, errors='ignore')
-    return DATA
-
 def main():
     st.title("Appointment Showup Prediction")
     CLINICS = DATASET['CLINIC'].dropna().unique()
