@@ -24,8 +24,6 @@ def main():
             (dataset['APPT_DATE'].dt.date >= appt_date_range[0]) &
             (dataset['APPT_DATE'].dt.date <= appt_date_range[1])
         ]
-        filtered_data = filtered_data[['LEAD_TIME','TOTAL_NUMBER_OF_NOSHOW', 'TOTAL_NUMBER_OF_SUCCESS_APPOINTMENT',
-        'TOTAL_NUMBER_OF_CANCELLATIONS', 'TOTAL_NUMBER_OF_RESCHEDULED', 'NUM_OF_MONTH']]
         
         if not filtered_data.empty:
             predictions = model.predict(filtered_data)
