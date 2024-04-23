@@ -24,12 +24,13 @@ def encode_features(data, encoder_dict, skip_columns=None):
     if skip_columns is None:
         skip_columns = []
     for column in encoder_dict:
-        if column not in skip_columns:
+        if column in data.columns and column not in skip_columns:  # Only process columns that exist and are not in skip_columns
             le = preprocessing.LabelEncoder()
             le.classes_ = encoder_dict[column]
             data[column] = data[column].apply(lambda x: x if x in le.classes_ else 'Unknown')
             data[column] = le.transform(data[column])
     return data
+
 
 # Main function for Streamlit app
 def main():
