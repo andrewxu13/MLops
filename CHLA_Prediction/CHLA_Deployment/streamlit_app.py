@@ -21,12 +21,14 @@ def main():
     st.title("Appointment Showup Prediction")
     clinics = dataset['CLINIC'].dropna().unique()
     clinic = st.selectbox("Select a Clinic", options=clinics)
+    selected_clinics = st.multiselect("Select Clinic(s)", options=clinics)
+
     appt_date_range = st.date_input("Select Appointment Date Range", value=[dataset['APPT_DATE'].min(), dataset['APPT_DATE'].max()])
 
     if st.button("Predict"):
         # Filter data for prediction
         prediction_data = dataset[
-            (dataset['CLINIC'] == clinic) &
+            (dataset['CLINIC'].isin(selected_clinics)) &
             (dataset['APPT_DATE'].dt.date >= appt_date_range[0]) &
             (dataset['APPT_DATE'].dt.date <= appt_date_range[1])
         ]
@@ -44,7 +46,10 @@ def main():
             # Filter columns for display
             display_data = prediction_data[['MRN', 'APPT_DATE', 'BOOK_DATE', 'CLINIC', 'IS_NOSHOW', 'PREDICTION', 'PROGRESS_BAR']]
             st.dataframe(display_data)
-            st.write(probabilities)  # Add this line to print the raw probabilities
+            with st.expander("See Probabilities"):
+                st.write("The probabilities of the predictions:")
+                st.write(probabilities)
+
             
         else:
             st.error("No data available for the selected clinic and date range.")
