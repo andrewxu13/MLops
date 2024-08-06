@@ -40,10 +40,10 @@ def main():
             probabilities = model.predict_proba(processed_data)
             prediction_data['PREDICTION'] = np.argmax(probabilities, axis=1)
             prediction_data['PROBABILITY'] = probabilities[:, 1]  # Assuming class 1 is the positive class
-            prediction_data['PROGRESS_BAR'] = prediction_data['PROBABILITY'].apply(generate_progress_bar)
+            # prediction_data['PROGRESS_BAR'] = prediction_data['PROBABILITY'].apply(generate_progress_bar)
 
             # Filter columns for display
-            display_data = prediction_data[['MRN', 'APPT_DATE', 'BOOK_DATE', 'CLINIC', 'IS_NOSHOW', 'PREDICTION', 'PROGRESS_BAR']]
+            display_data = prediction_data[['MRN', 'APPT_DATE', 'BOOK_DATE', 'CLINIC', 'IS_NOSHOW', 'PREDICTION']]
             st.dataframe(display_data)
             with st.expander("See Probabilities"):
                 st.write("The probabilities of the predictions:")
