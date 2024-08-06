@@ -20,7 +20,6 @@ def generate_progress_bar(probability, max_length=10):
 def main():
     st.title("Appointment Showup Prediction")
     clinics = dataset['CLINIC'].dropna().unique()
-    clinic = st.selectbox("Select a Clinic", options=clinics)
     selected_clinics = st.multiselect("Select Clinic(s)", options=clinics)
 
     appt_date_range = st.date_input("Select Appointment Date Range", value=[dataset['APPT_DATE'].min(), dataset['APPT_DATE'].max()])
