@@ -44,6 +44,8 @@ def main():
             # Filter columns for display
             display_data = prediction_data[['MRN', 'APPT_DATE', 'BOOK_DATE', 'CLINIC', 'IS_NOSHOW', 'PREDICTION', 'PROGRESS_BAR']]
             st.dataframe(display_data)
+            st.write(probabilities)  # Add this line to print the raw probabilities
+            
         else:
             st.error("No data available for the selected clinic and date range.")
 
