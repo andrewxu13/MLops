@@ -12,6 +12,11 @@ dataset = pd.read_csv('./CHLA_Prediction/CHLA_Deployment/CHLA_clean_data_2024_Ap
 dataset.columns = dataset.columns.str.upper()
 dataset['APPT_DATE'] = pd.to_datetime(dataset['APPT_DATE'], errors='coerce')
 
+def generate_progress_bar(probability, max_length=10):
+    filled_length = int(round(probability * max_length))
+    bar = '█' * filled_length + '-' * (max_length - filled_length)
+    return bar
+
 def main():
     st.title("Appointment Showup Prediction")
     clinics = dataset['CLINIC'].dropna().unique()
@@ -32,15 +37,13 @@ def main():
 
         if not processed_data.empty:
             probabilities = model.predict_proba(processed_data)
-            predictions = np.argmax(probabilities, axis=1)  # Getting the class with the highest probability
-            prediction_data['PREDICTION'] = predictions
+            prediction_data['PREDICTION'] = np.argmax(probabilities, axis=1)
             prediction_data['PROBABILITY'] = probabilities[:, 1]  # Assuming class 1 is the positive class
+            prediction_data['PROGRESS_BAR'] = prediction_data['PROBABILITY'].apply(generate_progress_bar)
 
-            # Filter columns for display after predictions
-            display_data = prediction_data[['MRN', 'APPT_DATE', 'BOOK_DATE', 'CLINIC', 'IS_NOSHOW', 'PREDICTION']]
-            display_data['PROBABILITY_BAR'] = prediction_data['PROBABILITY'].apply(lambda x: st.progress(x))
-
-            st.write(display_data)
+            # Filter columns for display
+            display_data = prediction_data[['MRN', 'APPT_DATE', 'BOOK_DATE', 'CLINIC', 'IS_NOSHOW', 'PREDICTION', 'PROGRESS_BAR']]
+            st.dataframe(display_data)
         else:
             st.error("No data available for the selected clinic and date range.")
 
